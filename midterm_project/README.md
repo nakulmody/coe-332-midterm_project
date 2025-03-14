@@ -2,9 +2,9 @@
 
 ## Description
 
-The purpose of this folder is to introduce ourselves to web APIs and learn how to incorporate them into our scripts to reduce the load on users. 
+The purpose of this folder is to introduce ourselves to redis databases and learn how to incorporate them into our scripts and web APIs to perform higher level computations.
 
-In this folder, we interact with a web API to injest data from the ISS website and perform summary statistics on them.
+In this folder, we interact with a web API and a redis database to injest data from the ISS website and push to database and eventually perform summary statistics on them.
 
 This application uses docker, so please ensure you have that library.
 
@@ -20,9 +20,21 @@ docker-compose.yml - yml file that helps us create 2 containers, one for the red
 
 requirments.txt - Text file that holds all the dependencies that need to be pip installed upon running program.
 
-1. Build the Docker Image:
+1. Open up 2 Windows:
 
-We compose our docker image to help create our containers and run our code eventually.
+We want to open up 2 windows, one that has access to the directory with the files.
+
+We do this because when running our flask and redis applications, we are unable to use the
+
+terminal to hit our endpoints. By creating 2 windows we are going to use one of the windows to run our docker
+
+image which in turn runs flask and our redis database, and make the other window hit our endpoints to look at our
+
+computations. 
+
+2. Build the Docker Image:
+
+We compose our docker image to help create our containers and run our code eventually. This is done in the window in the directory.
 
 Navigate to the directory containing the Dockerfile and iss_tracker.py, then run the following command to build the Docker image:
 
@@ -32,9 +44,11 @@ What this does:
 
 docker-compose works along with Dockerfile in setting up the environments.
 
+We use --build to build our image and environments. The -d helps us use the terminal after running.
+
 It creates 2 containers and installs all the dependencies from the requirments.txt file.
 
-2. Run the Docker Container
+3. Run the Docker Container
 
 Once the image is built, load up flask in the container and start compiling the script.
 
@@ -46,19 +60,21 @@ We just name the instance of running the image testing. We don't have to worry a
 in the yml file.
 
 
-3. Access the Flask API
+4. Access the Flask API
 
-After the container starts, you can access the API in a browser or using curl
+After the container starts, you can access the API in a browser or using curl. We do this in the other window that has been untouched.
+
+It does not matter whether this is in the directory or not since we are accessing the API using ports.
 
 We can then use the GET keyword to call API endpoints that end up calling functions to get our
-    summary statistics
+summary statistics
 
 Ex.
 We can type the below line in the terminal to run our API endpoint "/now" and receive summary statistics based on the closest data point to the current time
 
 curl http://localhost:5000/now
 
-4. Stopping the Container
+5. Stopping the Container
 
 To stop the running container, press Ctrl + C in the terminal where it is running.
 
@@ -69,15 +85,15 @@ Make sure to close the containers after my writing docker compose down
 ## Interpreting output
 IF RUNNING API ENDPOINTS IN ORDER AS SEEN ON COE332 Website:
 
-The first lines print the entire data set. It is given as a list of dictionaries with EPOCH, X coordinates, Y coordinates, and Z Coordiates as well as velocities in the x,y, and z directions.
+The first endpoint (/epochs) the entire data set. It is given as a list of dictionaries with EPOCH, X coordinates, Y coordinates, and Z Coordiates as well as velocities in the x,y, and z directions. If given a limit and offset it will apply accordingly and give limit number of datapoints after the offset.
 
-The next function will print certain data points based on our limit and offset. This will be based on user input on the flask API.
+The next endpoint (/epochs/<epoch>) gives the state vectors of a specific data point.
 
-The next function will be printing a specific data points' state vectors. This will also bebased on user input on the flask API.
+The next endpoint (/epochs/<epoch>/location) gives the location of the ISS at that point in time. It will give the latitude, longitude, altitude, and the relative location (what state, country it is above)
 
-The next function will print the instantaneuous speed at a time. This will also bebased on user input on the flask API.
+The next endpoint (/epochs/<epoch>/speed) will print the instantaneuous speed at a time.
 
-The last endopoint will print the state vectors for the closest data set based on the current time. It will also print the instantaneuous speed.
+The last endopoint (/now) will return the state vectors for the closest data set based on the current time. It will also return the instantaneuous speed and the location.
 
 ## Use of AI
 
