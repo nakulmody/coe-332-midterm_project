@@ -16,33 +16,35 @@ API Reference: https://spotthestation.nasa.gov/trajectory_data.cfm
 
 test_iss_tracker.py - This is our unit testing file for the iss_tracker script. It tests the 3 functions that were created in the main script including the normal case, and most edge cases. 
 
-1. Build the Docker Image
+docker-compose.yml - yml file that helps us create 2 containers, one for the redis database and one for flask to run on
+
+requirments.txt - Text file that holds all the dependencies that need to be pip installed upon running program.
+
+1. Build the Docker Image:
+
+We compose our docker image to help create our containers and run our code eventually.
 
 Navigate to the directory containing the Dockerfile and iss_tracker.py, then run the following command to build the Docker image:
 
-docker build -t iss_tracker .
+docker compose up --build -d
 
 What this does:
 
-docker build starts the build process.
+docker-compose works along with Dockerfile in setting up the environments.
 
--t iss_tracker tags the image with the name iss_tracker.
-
-. indicates that the Dockerfile is in the current directory.
+It creates 2 containers and installs all the dependencies from the requirments.txt file.
 
 2. Run the Docker Container
 
-Once the image is built, start the container using:
+Once the image is built, load up flask in the container and start compiling the script.
 
-docker run -p 5000:5000 iss_tracker
+docker run testing
 
 What this does:
 
-docker run starts a new container from the iss_tracker image.
+We just name the instance of running the image testing. We don't have to worry about initializing ports since this is done
+in the yml file.
 
--p 5000:5000 maps port 5000 of the container to port 5000 on the host machine, making the Flask API accessible.
-
-iss_tracker is the name of the Docker image.
 
 3. Access the Flask API
 
@@ -59,6 +61,8 @@ curl http://localhost:5000/now
 4. Stopping the Container
 
 To stop the running container, press Ctrl + C in the terminal where it is running.
+
+Make sure to close the containers after my writing docker compose down
 
 
 

@@ -17,7 +17,11 @@ from geopy.geocoders import Nominatim
 logging.basicConfig(level=logging.ERROR)
 
 app = Flask(__name__)
-rd = redis.Redis(host='127.0.0.1', port=6379, db=0)
+
+def get_redis_client():
+    return redis.Redis(host='redis-db', port=6379, db=0)
+
+rd = get_redis_client()
 
 def fetching_data():
     """
@@ -26,13 +30,21 @@ def fetching_data():
     Output:
     List of dictionaries
     """
-    if(rd.dbsize() == 0):
-        url = 'https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml'
-        response = requests.get(url)
-        data = xmltodict.parse(response.content)
-        # Sifted manually through the conversion to get to the useful data
-        list_data = data['ndm']['oem']['body']['segment']['data']['stateVector']
-        rd.set("iss_data", json.dumps(list_data))
+    try:
+        if(rd.dbsize() == 0):
+            url = 'https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml'
+            response = requests.get(url)
+            if response.status_code != 200:
+                logging.error(f"Failed to fetch data. HTTP Status Code: {response.status_code}")
+                return
+            data = xmltodict.parse(response.content)
+            # Sifted manually through the conversion to get to the useful data
+            list_data = data['ndm']['oem']['body']['segment']['data']['stateVector']
+            rd.set("iss_data", json.dumps(list_data))
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request error: {e}")
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
 
 
 
@@ -100,6 +112,10 @@ def get_epochs() -> Response:
     values given
     """
     list_data = json.loads(rd.get("iss_data"))
+    if list_data is None:
+        fetching_data()  # Fetch and store data if it's not already in Redis
+    list_data = json.loads(rd.get("iss_data"))
+
     limit = int(request.args.get("limit", 0))
     offset = int(request.args.get("offset", 0))
     if(limit <= 0 or offset <= 0):
@@ -115,6 +131,11 @@ def get_location(epoch):
     specific = epoch
     index = None
     list_data = json.loads(rd.get("iss_data"))
+    
+    if list_data is None:
+        fetching_data()  # Fetch and store data if it's not already in Redis
+    list_data = json.loads(rd.get("iss_data"))
+
     for i in range(len(list_data)):
         if(specific == list_data[i]['EPOCH']):
             index = i
@@ -130,10 +151,11 @@ def get_location(epoch):
     loc = coordinates.EarthLocation(*itrs.cartesian.xyz)
     lat = loc.lat.value
     lon = loc.lon.value
+    alt = loc.height.value
     geocoder = Nominatim(user_agent='iss_tracker')
     geoloc = geocoder.reverse((lat, lon), zoom=15, language='en')
-    answer = f"The latitude of the ISS is {geoloc["actual_lat"]}. The longitude is {geoloc["actual_lon"]}." \
-    f" The altiude is {geoloc["alt"]}. The geoposition is {geoloc["geoloc"]}"
+    answer = f"The latitude of the ISS is {lat}. The longitude is {lon}." \
+    f" The altiude is {alt}. The geoposition is {geoloc[0]}\n"
     return answer
 
     
@@ -146,7 +168,12 @@ def specific_data(epoch):
     """
     specific = epoch
     index = None
+
     list_data = json.loads(rd.get("iss_data"))
+    if list_data is None:
+        fetching_data()  # Fetch and store data if it's not already in Redis
+    list_data = json.loads(rd.get("iss_data"))
+
     for i in range(len(list_data)):
         if(specific == list_data[i]['EPOCH']):
             index = i
@@ -162,6 +189,11 @@ def get_speed(epoch):
     specific = epoch
     index = None
     list_data = json.loads(rd.get("iss_data"))
+
+    if list_data is None:
+        fetching_data()  # Fetch and store data if it's not already in Redis
+    list_data = json.loads(rd.get("iss_data"))
+
     for i in range(len(list_data)):
         if(specific == list_data[i]['EPOCH']):
             index = i
@@ -179,19 +211,26 @@ def state_close_to_now():
     """
 
     list_data = json.loads(rd.get("iss_data"))
+
+    if list_data is None:
+        fetching_data()  # Fetch and store data if it's not already in Redis
+    list_data = json.loads(rd.get("iss_data"))
+
     closest_data = data_set_closest(list_data, 'EPOCH')
     index = None
     for i in range(len(list_data)):
         if(closest_data[0] == list_data[i]['EPOCH']):
             index = i
             break
-
+    epoch_val = list_data[index]["EPOCH"]
+    location_ans = get_location(epoch_val)
     insta_speed = calc_speed(list_data, index)
     answer = f"The closest data point has a date/time of {closest_data[0]}\n"
     answer += f"The x,y,z coordinates of the ISS at this point are {closest_data[1]} {closest_data[2]} {closest_data[3]}\n"
     answer += f"The velocity components at this time are {closest_data[4]} km/s in the x-direction " \
         f"{closest_data[5]} km/s in the y-direction {closest_data[6]} km/s in the z-direction.\n"
     answer += f"The instantaneous velocity at this time is {insta_speed}\n"
+    answer += location_ans
     return answer
 
     
