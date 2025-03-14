@@ -8,6 +8,11 @@ import math
 import logging
 import redis
 from flask import Flask, Response, request, jsonify
+import time
+from astropy import coordinates
+from astropy import units
+from astropy.time import Time
+from geopy.geocoders import Nominatim
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -107,6 +112,30 @@ def get_epochs() -> Response:
 
 @app.route('/epochs/<epoch>/location', methods = ['GET'])
 def get_location(epoch):
+    specific = epoch
+    index = None
+    list_data = json.loads(rd.get("iss_data"))
+    for i in range(len(list_data)):
+        if(specific == list_data[i]['EPOCH']):
+            index = i
+            break
+    data_point = list_data[index]
+    x = float(data_point['X']['#text'])
+    y = float(data_point['Y']['#text'])
+    z = float(data_point['Z']['#text'])
+    this_epoch=time.strftime('%Y-%m-%d %H:%m:%S', time.strptime(data_point['EPOCH'][:-5], '%Y-%jT%H:%M:%S'))
+    cartrep = coordinates.CartesianRepresentation([x, y, z], unit=units.km)
+    gcrs = coordinates.GCRS(cartrep, obstime=this_epoch)
+    itrs = gcrs.transform_to(coordinates.ITRS(obstime=this_epoch))
+    loc = coordinates.EarthLocation(*itrs.cartesian.xyz)
+    lat = loc.lat.value
+    lon = loc.lon.value
+    geocoder = Nominatim(user_agent='iss_tracker')
+    geoloc = geocoder.reverse((lat, lon), zoom=15, language='en')
+    answer = f"The latitude of the ISS is {geoloc["actual_lat"]}. The longitude is {geoloc["actual_lon"]}." \
+    f" The altiude is {geoloc["alt"]}. The geoposition is {geoloc["geoloc"]}"
+    return answer
+
     
 
 @app.route('/epochs/<epoch>', methods = ['GET'])
@@ -266,8 +295,9 @@ def average_speed(list_data: list, closest_data: list) -> tuple:
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
     fetching_data()
+    app.run(debug=True, host='0.0.0.0')
+    
 
 
 
