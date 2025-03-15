@@ -97,7 +97,7 @@ The last endopoint (/now) will return the state vectors for the closest data set
 
 ## Use of AI
 
-AI was used in this project, specifically when dealing with the datetime library as I am not familiar with the functions and syntax. Additionally, some of the unit testing was created with the help of AI as I forgot a few edge cases that needed to be checked. It was also used in the creation of the docker file because I was confused on how that worked (still not sure if done correctly). The last thing that an AI was used for was the creation of the directions for how to build/run program. A bit of this was confusing for me so I used Chat GPT to help clear this up. Disclaimer: Not sure if this is written correctly since this past week has been extremely difficult for me, and I haven't been able to come to class since I was so busy with midterms from other classes. Sorry!! I will pick up the slack this week!
+AI was used in this project, specifically when dealing with the datetime library as I am not familiar with the functions and syntax. Additionally, some of the unit testing was created with the help of AI as unit testing for flask and redis is difficult and was not covered in clas. It was also used in the creation of the docker file because I was confused on how that worked (still not sure if done correctly). The last thing that an AI was used for was the creation of the directions for how to build/run program. A bit of this was confusing for me so I used Chat GPT to help clear this up. Disclaimer: Not sure if this is written correctly since this past week has been extremely difficult for me, and I haven't been able to come to class since I was so busy with midterms from other classes. Sorry!! I will pick up the slack this week!
 
 
 
