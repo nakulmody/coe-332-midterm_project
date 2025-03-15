@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Author: Nakul Mody
+# UT EID: nm34494
+# TACC Username: nakulmody27
+
 import requests
 import json
 import xmltodict
