@@ -128,6 +128,10 @@ def get_epochs() -> Response:
 
 @app.route('/epochs/<epoch>/location', methods = ['GET'])
 def get_location(epoch):
+    """ 
+    Based on the input EPOCH/time, this function computes the location.
+    It returns the latitude, longitude, altitude, and geoposition at a given time.
+    """
     specific = epoch
     index = None
     list_data = json.loads(rd.get("iss_data"))
@@ -207,7 +211,7 @@ def get_speed(epoch):
 def state_close_to_now():
     """
     This function finds the closest data point to the current time
-        and prints the state vectors along with its instaneous speed
+        and prints the state vectors along with its instaneous speed and location
     """
 
     list_data = json.loads(rd.get("iss_data"))
